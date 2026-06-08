@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AdminPanel } from "@/components/AdminPanel";
 import { ChatPanel } from "@/components/ChatPanel";
 import { Controls } from "@/components/Controls";
 import { VideoTile } from "@/components/VideoTile";
@@ -14,13 +15,19 @@ type MeetingRoomProps = {
 export function MeetingRoom({ roomId }: MeetingRoomProps) {
   const [name, setName] = useState("Guest");
   const [meetingLink, setMeetingLink] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     setName(window.sessionStorage.getItem("lightmeet-name") ?? "Guest");
     setMeetingLink(window.location.href);
+    fetch("/api/auth/me")
+      .then((response) => response.json())
+      .then((session: { isAdmin: boolean }) => setIsAdmin(session.isAdmin))
+      .finally(() => setAuthChecked(true));
   }, []);
 
-  const meeting = useMeeting({ roomId, name });
+  const meeting = useMeeting({ roomId, name, isAdmin, enabled: authChecked });
   const [copied, setCopied] = useState(false);
   const localParticipant = meeting.participants.find((participant) => participant.isLocal);
 
@@ -82,7 +89,10 @@ export function MeetingRoom({ roomId }: MeetingRoomProps) {
           />
         </div>
 
-        <ChatPanel messages={meeting.messages} onSend={meeting.sendChat} />
+        <div className="flex flex-col gap-4">
+          {meeting.isAdmin ? <AdminPanel participants={meeting.participants} onControl={meeting.sendAdminControl} /> : null}
+          <ChatPanel messages={meeting.messages} onSend={meeting.sendChat} />
+        </div>
       </section>
     </main>
   );

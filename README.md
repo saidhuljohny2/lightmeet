@@ -19,6 +19,8 @@ A simple, lightweight online meeting platform built with Next.js 15, TypeScript,
 - Emoji raise-hand indicator on controls and participant tiles
 - Responsive layout for desktop, tablet, and mobile
 - Configurable room limit, defaulting to 100 members
+- Admin login for starting and scheduling meetings
+- Admin participant controls for muting, camera-off requests, and removing students
 - No database, accounts, cloud storage, or paid meeting SDKs
 
 ## Important Vercel Note
@@ -60,6 +62,9 @@ Create `.env.local`:
 NEXT_PUBLIC_SIGNALING_URL=ws://localhost:3001
 NEXT_PUBLIC_MAX_PARTICIPANTS=100
 MAX_PARTICIPANTS=100
+ADMIN_USERNAME=saidh
+ADMIN_PASSWORD=LightMeet@123
+AUTH_SECRET=replace-with-a-long-random-secret
 ```
 
 For production, use a secure WebSocket URL:
@@ -68,7 +73,23 @@ For production, use a secure WebSocket URL:
 NEXT_PUBLIC_SIGNALING_URL=wss://your-signaling-host.example.com
 NEXT_PUBLIC_MAX_PARTICIPANTS=100
 MAX_PARTICIPANTS=100
+ADMIN_USERNAME=saidh
+ADMIN_PASSWORD=replace-this-before-deploying
+AUTH_SECRET=replace-with-a-long-random-secret
 ```
+
+## Admin Access
+
+Temporary local admin credentials:
+
+```text
+Username: saidh
+Password: LightMeet@123
+```
+
+Only the admin can create or schedule meetings. Students can still join with a meeting link or meeting ID. Change `ADMIN_PASSWORD` and `AUTH_SECRET` before deploying.
+
+Admin controls are sent through the signaling server. The browser receiving the command applies mute/camera-off locally, which matches browser security rules around camera and microphone access.
 
 ## Local Development
 

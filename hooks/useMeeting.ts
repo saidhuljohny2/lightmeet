@@ -14,9 +14,11 @@ const rtcConfig: RTCConfiguration = {
 type UseMeetingOptions = {
   roomId: string;
   name: string;
+  isAdmin: boolean;
+  enabled?: boolean;
 };
 
-export function useMeeting({ roomId, name }: UseMeetingOptions) {
+export function useMeeting({ roomId, name, isAdmin, enabled = true }: UseMeetingOptions) {
   const peerId = useMemo(() => createPeerId(), []);
   const localStreamRef = useRef<MediaStream | null>(null);
   const signalingRef = useRef<SignalingClient | null>(null);
@@ -55,6 +57,29 @@ export function useMeeting({ roomId, name }: UseMeetingOptions) {
     });
   }, [peerId, roomId]);
 
+  const applyLocalMediaState = useCallback(
+    (nextState: Partial<{ muted: boolean; cameraOff: boolean; handRaised: boolean }>) => {
+      mediaStateRef.current = { ...mediaStateRef.current, ...nextState };
+      localStreamRef.current?.getAudioTracks().forEach((track) => {
+        track.enabled = !mediaStateRef.current.muted;
+      });
+      localStreamRef.current?.getVideoTracks().forEach((track) => {
+        track.enabled = !mediaStateRef.current.cameraOff;
+      });
+      upsertParticipant({
+        id: peerId,
+        name,
+        muted: mediaStateRef.current.muted,
+        cameraOff: mediaStateRef.current.cameraOff,
+        handRaised: mediaStateRef.current.handRaised,
+        isLocal: true,
+        role: isAdmin ? "admin" : "student",
+      });
+      sendMediaState();
+    },
+    [isAdmin, name, peerId, sendMediaState, upsertParticipant],
+  );
+
   const createPeerConnection = useCallback(
     (remotePeer: SignalPeer) => {
       const existing = peersRef.current.get(remotePeer.peerId);
@@ -82,6 +107,7 @@ export function useMeeting({ roomId, name }: UseMeetingOptions) {
         upsertParticipant({
           id: remotePeer.peerId,
           name: remotePeer.name,
+          role: remotePeer.role,
           stream: event.streams[0],
         });
       };
@@ -96,7 +122,7 @@ export function useMeeting({ roomId, name }: UseMeetingOptions) {
         }
       };
 
-      upsertParticipant({ id: remotePeer.peerId, name: remotePeer.name });
+      upsertParticipant({ id: remotePeer.peerId, name: remotePeer.name, role: remotePeer.role });
       return connection;
     },
     [peerId, upsertParticipant],
@@ -124,7 +150,7 @@ export function useMeeting({ roomId, name }: UseMeetingOptions) {
         }
 
         if (message.type === "peer-joined") {
-          upsertParticipant({ id: message.peer.peerId, name: message.peer.name });
+          upsertParticipant({ id: message.peer.peerId, name: message.peer.name, role: message.peer.role });
         }
 
         if (message.type === "peer-left") {
@@ -184,6 +210,23 @@ export function useMeeting({ roomId, name }: UseMeetingOptions) {
           );
         }
 
+        if (message.type === "admin-control") {
+          if (message.action === "mute") {
+            applyLocalMediaState({ muted: true });
+            setError("The admin muted your microphone.");
+          }
+          if (message.action === "camera-off") {
+            applyLocalMediaState({ cameraOff: true });
+            setError("The admin turned your camera off.");
+          }
+          if (message.action === "remove") {
+            setError("The admin removed you from the meeting.");
+            window.setTimeout(() => {
+              window.location.href = "/";
+            }, 900);
+          }
+        }
+
         if (message.type === "error") {
           setError(message.message);
         }
@@ -191,7 +234,7 @@ export function useMeeting({ roomId, name }: UseMeetingOptions) {
         setError("A meeting connection error occurred. Please refresh and try again.");
       }
     },
-    [createPeerConnection, makeOffer, peerId, upsertParticipant],
+    [applyLocalMediaState, createPeerConnection, makeOffer, peerId, upsertParticipant],
   );
 
   const downloadRecording = useCallback(() => {
@@ -218,6 +261,8 @@ export function useMeeting({ roomId, name }: UseMeetingOptions) {
   }, []);
 
   useEffect(() => {
+    if (!enabled) return;
+
     let mounted = true;
     const peerConnections = peersRef.current;
     const client = new SignalingClient(signalingUrl);
@@ -225,16 +270,22 @@ export function useMeeting({ roomId, name }: UseMeetingOptions) {
 
     async function start() {
       try {
+        const adminToken = isAdmin ? await getAdminSignalToken() : undefined;
+        if (isAdmin && !adminToken) {
+          setError("Admin signaling token could not be created. Please sign in again.");
+          setIsConnecting(false);
+          return;
+        }
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         if (!mounted) return;
         localStreamRef.current = stream;
-        upsertParticipant({ id: peerId, name, stream, isLocal: true });
+        upsertParticipant({ id: peerId, name, stream, isLocal: true, role: isAdmin ? "admin" : "student" });
 
         client.connect();
         client.onMessage((message) => {
           void handleSignal(message);
         });
-        client.send({ type: "join", roomId, peerId, name });
+        client.send({ type: "join", roomId, peerId, name, role: isAdmin ? "admin" : "student", adminToken });
         setIsConnecting(false);
       } catch {
         setError("Camera or microphone permission was denied. Check browser permissions and reload.");
@@ -252,7 +303,7 @@ export function useMeeting({ roomId, name }: UseMeetingOptions) {
       peerConnections.forEach((connection) => connection.close());
       peerConnections.clear();
     };
-  }, [handleSignal, name, peerId, roomId, signalingUrl, stopRecordingAndDownload, upsertParticipant]);
+  }, [enabled, handleSignal, isAdmin, name, peerId, roomId, signalingUrl, stopRecordingAndDownload, upsertParticipant]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setElapsedSeconds((value) => value + 1), 1000);
@@ -273,30 +324,29 @@ export function useMeeting({ roomId, name }: UseMeetingOptions) {
   }, [stopRecordingAndDownload]);
 
   const toggleMic = useCallback(() => {
-    const nextMuted = !mediaStateRef.current.muted;
-    mediaStateRef.current.muted = nextMuted;
-    localStreamRef.current?.getAudioTracks().forEach((track) => {
-      track.enabled = !nextMuted;
-    });
-    upsertParticipant({ id: peerId, name, muted: nextMuted, isLocal: true });
-    sendMediaState();
-  }, [name, peerId, sendMediaState, upsertParticipant]);
+    applyLocalMediaState({ muted: !mediaStateRef.current.muted });
+  }, [applyLocalMediaState]);
 
   const toggleCamera = useCallback(() => {
-    const nextCameraOff = !mediaStateRef.current.cameraOff;
-    mediaStateRef.current.cameraOff = nextCameraOff;
-    localStreamRef.current?.getVideoTracks().forEach((track) => {
-      track.enabled = !nextCameraOff;
-    });
-    upsertParticipant({ id: peerId, name, cameraOff: nextCameraOff, isLocal: true });
-    sendMediaState();
-  }, [name, peerId, sendMediaState, upsertParticipant]);
+    applyLocalMediaState({ cameraOff: !mediaStateRef.current.cameraOff });
+  }, [applyLocalMediaState]);
 
   const toggleHand = useCallback(() => {
-    mediaStateRef.current.handRaised = !mediaStateRef.current.handRaised;
-    upsertParticipant({ id: peerId, name, handRaised: mediaStateRef.current.handRaised, isLocal: true });
-    sendMediaState();
-  }, [name, peerId, sendMediaState, upsertParticipant]);
+    applyLocalMediaState({ handRaised: !mediaStateRef.current.handRaised });
+  }, [applyLocalMediaState]);
+
+  const sendAdminControl = useCallback(
+    (to: PeerId, action: "mute" | "camera-off" | "remove") => {
+      if (!isAdmin) return;
+      signalingRef.current?.send({ type: "admin-control", roomId, from: peerId, to, action });
+      if (action === "remove") {
+        peersRef.current.get(to)?.close();
+        peersRef.current.delete(to);
+        setParticipants((current) => current.filter((participant) => participant.id !== to));
+      }
+    },
+    [isAdmin, peerId, roomId],
+  );
 
   const replaceVideoTrack = useCallback(async (track: MediaStreamTrack) => {
     const stream = localStreamRef.current;
@@ -395,5 +445,14 @@ export function useMeeting({ roomId, name }: UseMeetingOptions) {
     startRecording,
     stopRecording,
     leave,
+    sendAdminControl,
+    isAdmin,
   };
+}
+
+async function getAdminSignalToken() {
+  const response = await fetch("/api/auth/signal-token");
+  if (!response.ok) return undefined;
+  const body = (await response.json()) as { token?: string };
+  return body.token;
 }

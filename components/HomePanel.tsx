@@ -21,10 +21,16 @@ export function HomePanel() {
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
   const [scheduledLink, setScheduledLink] = useState("");
   const [scheduleStatus, setScheduleStatus] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const displayName = name.trim() || suggestedName;
 
   useEffect(() => {
     setSuggestedName(`Guest ${Math.floor(Math.random() * 900 + 100)}`);
+    fetch("/api/auth/me")
+      .then((response) => response.json())
+      .then((session: { isAdmin: boolean }) => setIsAdmin(session.isAdmin))
+      .finally(() => setAuthChecked(true));
   }, []);
 
   function saveName() {
@@ -32,6 +38,10 @@ export function HomePanel() {
   }
 
   function createMeeting() {
+    if (!isAdmin) {
+      router.push("/login");
+      return;
+    }
     saveName();
     router.push(`/meeting/${createMeetingId()}`);
   }
@@ -46,6 +56,10 @@ export function HomePanel() {
 
   async function scheduleMeeting(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!isAdmin) {
+      router.push("/login");
+      return;
+    }
     const startsAt = new Date(`${scheduleDate}T${scheduleTime || "09:00"}`);
     if (!scheduleDate || Number.isNaN(startsAt.getTime())) {
       setScheduleStatus("Choose a valid date and time.");
@@ -92,6 +106,13 @@ export function HomePanel() {
     setScheduleStatus("Calendar invite downloaded.");
   }
 
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setIsAdmin(false);
+    setScheduledLink("");
+    setScheduleStatus("Admin signed out.");
+  }
+
   return (
     <main className="min-h-screen overflow-hidden bg-pearl text-ink">
       <section className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-5 py-5 sm:px-8 lg:px-10">
@@ -106,6 +127,15 @@ export function HomePanel() {
           <div className="hidden items-center gap-2 text-sm text-slate-600 sm:flex">
             <span className="rounded-md border border-line bg-white px-3 py-2">No database</span>
             <span className="rounded-md border border-line bg-white px-3 py-2">Local recording</span>
+            {isAdmin ? (
+              <button className="rounded-md border border-line bg-white px-3 py-2 font-semibold hover:bg-slate-50" onClick={logout} type="button">
+                Sign out
+              </button>
+            ) : (
+              <button className="rounded-md bg-obsidian px-3 py-2 font-semibold text-white" onClick={() => router.push("/login")} type="button">
+                Admin login
+              </button>
+            )}
           </div>
         </nav>
 
@@ -150,15 +180,18 @@ export function HomePanel() {
             />
 
             <button
-              className="mb-3 flex w-full items-center justify-center gap-2 rounded-md bg-obsidian px-4 py-3 font-semibold text-white shadow-control transition hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-200"
+              className="mb-3 flex w-full items-center justify-center gap-2 rounded-md bg-obsidian px-4 py-3 font-semibold text-white shadow-control transition hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:bg-slate-400"
+              disabled={!authChecked}
               onClick={createMeeting}
               type="button"
             >
               <span aria-hidden>+</span>
-              Create Meeting
+              {isAdmin ? "Create Meeting" : "Admin Login to Start"}
             </button>
 
-            <details className="mb-5 rounded-md border border-line bg-white">
+            {!isAdmin && authChecked ? <p className="mb-3 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-500">Students can join with a meeting ID. Only the admin can start or schedule meetings.</p> : null}
+
+            <details className="mb-5 rounded-md border border-line bg-white" open={isAdmin ? undefined : false}>
               <summary className="cursor-pointer list-none px-4 py-3 text-center font-semibold transition hover:bg-slate-50">
                 Schedule Meeting
               </summary>
