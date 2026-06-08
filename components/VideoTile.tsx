@@ -35,10 +35,16 @@ export function VideoTile({ participant }: VideoTileProps) {
           {participant.isLocal ? " (you)" : ""}
         </span>
         <div className="flex shrink-0 items-center gap-1 text-xs">
-          {participant.handRaised ? <span className="rounded bg-white/15 px-2 py-1">Hand</span> : null}
+          {participant.handRaised ? <span className="rounded bg-amber-400 px-2 py-1 font-semibold text-slate-950">✋</span> : null}
           {participant.muted ? <span className="rounded bg-white/15 px-2 py-1">Muted</span> : null}
         </div>
       </div>
+
+      {participant.handRaised ? (
+        <div className="absolute right-3 top-3 rounded-md bg-amber-400 px-3 py-2 text-2xl shadow-lg" aria-label={`${participant.name} raised a hand`}>
+          ✋
+        </div>
+      ) : null}
     </article>
   );
 }

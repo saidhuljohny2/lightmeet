@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MAX_PARTICIPANTS } from "@/lib/config";
 import { createPeerId } from "@/lib/ids";
-import { buildRecordingStream, downloadBlob } from "@/lib/recording";
+import { buildRecordingStream, downloadBlob, getSupportedRecordingFormat, type RecordingFormat } from "@/lib/recording";
 import { SignalingClient } from "@/lib/signaling";
 import type { ChatMessage, Participant, PeerId, ServerSignal, SignalPeer } from "@/types/meeting";
 
@@ -24,6 +24,8 @@ export function useMeeting({ roomId, name }: UseMeetingOptions) {
   const mediaStateRef = useRef({ muted: false, cameraOff: false, handRaised: false });
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recordingChunksRef = useRef<Blob[]>([]);
+  const recordingDownloadedRef = useRef(false);
+  const recordingFormatRef = useRef<RecordingFormat>(getSupportedRecordingFormat());
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -192,6 +194,29 @@ export function useMeeting({ roomId, name }: UseMeetingOptions) {
     [createPeerConnection, makeOffer, peerId, upsertParticipant],
   );
 
+  const downloadRecording = useCallback(() => {
+    if (recordingDownloadedRef.current) return;
+    recordingDownloadedRef.current = true;
+    const format = recordingFormatRef.current;
+    const blob = new Blob(recordingChunksRef.current, { type: format.mimeType });
+    if (blob.size > 0) {
+      downloadBlob(blob, `lightmeet-${roomId}-${new Date().toISOString().replace(/[:.]/g, "-")}.${format.extension}`);
+    }
+    setIsRecording(false);
+  }, [roomId]);
+
+  const stopRecordingAndDownload = useCallback(() => {
+    const recorder = recorderRef.current;
+    if (!recorder || recorder.state === "inactive") {
+      return Promise.resolve();
+    }
+
+    return new Promise<void>((resolve) => {
+      recorder.addEventListener("stop", () => resolve(), { once: true });
+      recorder.stop();
+    });
+  }, []);
+
   useEffect(() => {
     let mounted = true;
     const peerConnections = peersRef.current;
@@ -221,18 +246,31 @@ export function useMeeting({ roomId, name }: UseMeetingOptions) {
 
     return () => {
       mounted = false;
-      recorderRef.current?.stop();
+      void stopRecordingAndDownload();
       client.close();
       localStreamRef.current?.getTracks().forEach((track) => track.stop());
       peerConnections.forEach((connection) => connection.close());
       peerConnections.clear();
     };
-  }, [handleSignal, name, peerId, roomId, signalingUrl, upsertParticipant]);
+  }, [handleSignal, name, peerId, roomId, signalingUrl, stopRecordingAndDownload, upsertParticipant]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setElapsedSeconds((value) => value + 1), 1000);
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    function handlePageHide() {
+      void stopRecordingAndDownload();
+    }
+
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("beforeunload", handlePageHide);
+    return () => {
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("beforeunload", handlePageHide);
+    };
+  }, [stopRecordingAndDownload]);
 
   const toggleMic = useCallback(() => {
     const nextMuted = !mediaStateRef.current.muted;
@@ -312,15 +350,16 @@ export function useMeeting({ roomId, name }: UseMeetingOptions) {
     try {
       const streams = participants.map((participant) => participant.stream).filter(Boolean) as MediaStream[];
       const stream = buildRecordingStream(streams);
-      const recorder = new MediaRecorder(stream, { mimeType: "video/webm;codecs=vp8,opus" });
+      const format = getSupportedRecordingFormat();
+      recordingFormatRef.current = format;
+      const recorder = new MediaRecorder(stream, { mimeType: format.mimeType });
       recordingChunksRef.current = [];
+      recordingDownloadedRef.current = false;
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) recordingChunksRef.current.push(event.data);
       };
       recorder.onstop = () => {
-        const blob = new Blob(recordingChunksRef.current, { type: "video/webm" });
-        downloadBlob(blob, `lightmeet-${roomId}-${new Date().toISOString().replace(/[:.]/g, "-")}.webm`);
-        setIsRecording(false);
+        downloadRecording();
       };
       recorder.start(1000);
       recorderRef.current = recorder;
@@ -328,15 +367,16 @@ export function useMeeting({ roomId, name }: UseMeetingOptions) {
     } catch {
       setError("Recording could not start in this browser.");
     }
-  }, [participants, roomId]);
+  }, [downloadRecording, participants]);
 
   const stopRecording = useCallback(() => {
-    recorderRef.current?.stop();
-  }, []);
+    void stopRecordingAndDownload();
+  }, [stopRecordingAndDownload]);
 
-  const leave = useCallback(() => {
+  const leave = useCallback(async () => {
+    await stopRecordingAndDownload();
     window.location.href = "/";
-  }, []);
+  }, [stopRecordingAndDownload]);
 
   return {
     peerId,

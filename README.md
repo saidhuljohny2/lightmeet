@@ -5,13 +5,17 @@ A simple, lightweight online meeting platform built with Next.js 15, TypeScript,
 ## Features
 
 - Create a meeting with a unique ID
+- Schedule a meeting by generating a future meeting link
+- Download a local `.ics` calendar invite for scheduled meetings
 - Join a meeting by URL or meeting ID
 - Peer-to-peer camera and microphone with WebRTC
 - Camera toggle, microphone mute, screen sharing, and leave controls
 - Participant tiles with names, status, participant count, and raise hand state
 - Lightweight in-memory meeting chat
-- Local recording with the MediaRecorder API and direct WebM download
+- Local recording with the MediaRecorder API and direct MP4 download when supported, with WebM fallback
+- Active local recordings are finalized automatically when the recording participant leaves
 - Meeting timer and basic connection quality indicator
+- Emoji raise-hand indicator on controls and participant tiles
 - Responsive layout for desktop, tablet, and mobile
 - Configurable room limit, defaulting to 100 members
 - No database, accounts, cloud storage, or paid meeting SDKs
@@ -109,7 +113,9 @@ npm start
 4. Add `NEXT_PUBLIC_SIGNALING_URL` in Vercel project settings.
 5. Deploy.
 
-The app itself does not need a database or file storage. Recordings stay in the browser and download directly to the user as `.webm` files.
+The app itself does not need a database or file storage. Recordings stay in the browser and download directly to the user as `.mp4` when the browser supports MP4 `MediaRecorder` output, otherwise `.webm`.
+
+If the participant who started recording clicks **Leave**, LightMeet stops the recorder first and downloads the video before returning to the home page. Browser tab closes and refreshes also trigger a best-effort recorder stop, but browsers may restrict downloads during abrupt page unloads.
 
 ## Signaling Relay Deployment
 
@@ -131,7 +137,7 @@ This limit controls admission and UI display. Pure peer-to-peer WebRTC mesh is s
 
 - WebRTC works best in current Chrome, Edge, Firefox, and Safari.
 - Some restrictive networks require TURN servers for reliable NAT traversal. This project uses a public STUN server by default and does not include paid TURN infrastructure.
-- Recording support depends on `MediaRecorder` and WebM support in the browser.
+- Recording support depends on `MediaRecorder`. MP4 output is used where supported; WebM is used as a compatibility fallback.
 
 ## Verification
 

@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createCalendarFile, downloadCalendarFile } from "@/lib/calendar";
 import { MAX_PARTICIPANTS } from "@/lib/config";
 import { createMeetingId } from "@/lib/ids";
 
@@ -10,6 +11,12 @@ export function HomePanel() {
   const [suggestedName, setSuggestedName] = useState("Guest");
   const [meetingId, setMeetingId] = useState("");
   const [name, setName] = useState("");
+  const [scheduleTitle, setScheduleTitle] = useState("LightMeet session");
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState("45");
+  const [scheduledLink, setScheduledLink] = useState("");
+  const [scheduleStatus, setScheduleStatus] = useState("");
   const displayName = name.trim() || suggestedName;
 
   useEffect(() => {
@@ -31,6 +38,41 @@ export function HomePanel() {
     if (!normalized) return;
     saveName();
     router.push(`/meeting/${encodeURIComponent(normalized)}`);
+  }
+
+  async function scheduleMeeting(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const startsAt = new Date(`${scheduleDate}T${scheduleTime || "09:00"}`);
+    if (!scheduleDate || Number.isNaN(startsAt.getTime())) {
+      setScheduleStatus("Choose a valid date and time.");
+      return;
+    }
+
+    saveName();
+    const roomId = createMeetingId();
+    const link = `${window.location.origin}/meeting/${roomId}`;
+    setScheduledLink(link);
+    await navigator.clipboard.writeText(link);
+    setScheduleStatus("Meeting link copied.");
+  }
+
+  async function copyScheduledLink() {
+    if (!scheduledLink) return;
+    await navigator.clipboard.writeText(scheduledLink);
+    setScheduleStatus("Meeting link copied.");
+  }
+
+  function downloadInvite() {
+    if (!scheduledLink || !scheduleDate) return;
+    const startsAt = new Date(`${scheduleDate}T${scheduleTime || "09:00"}`);
+    const contents = createCalendarFile({
+      title: scheduleTitle.trim() || "LightMeet session",
+      startsAt,
+      durationMinutes: Number(durationMinutes) || 45,
+      meetingLink: scheduledLink,
+    });
+    downloadCalendarFile(contents, `lightmeet-${scheduleDate}.ics`);
+    setScheduleStatus("Calendar invite downloaded.");
   }
 
   return (
@@ -73,13 +115,91 @@ export function HomePanel() {
             />
 
             <button
-              className="mb-5 flex w-full items-center justify-center gap-2 rounded-md bg-brand px-4 py-3 font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200"
+              className="mb-3 flex w-full items-center justify-center gap-2 rounded-md bg-brand px-4 py-3 font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200"
               onClick={createMeeting}
               type="button"
             >
               <span aria-hidden>+</span>
               Create Meeting
             </button>
+
+            <details className="mb-5 rounded-md border border-line dark:border-slate-700">
+              <summary className="cursor-pointer list-none px-4 py-3 text-center font-semibold transition hover:bg-slate-50 dark:hover:bg-slate-800">
+                Schedule Meeting
+              </summary>
+              <form className="space-y-3 border-t border-line p-4 dark:border-slate-700" onSubmit={scheduleMeeting}>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="scheduleTitle">
+                  Meeting title
+                </label>
+                <input
+                  id="scheduleTitle"
+                  className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-blue-950"
+                  value={scheduleTitle}
+                  onChange={(event) => setScheduleTitle(event.target.value)}
+                />
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="sm:col-span-1">
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="scheduleDate">
+                      Date
+                    </label>
+                    <input
+                      id="scheduleDate"
+                      className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-blue-950"
+                      type="date"
+                      value={scheduleDate}
+                      onChange={(event) => setScheduleDate(event.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="scheduleTime">
+                      Time
+                    </label>
+                    <input
+                      id="scheduleTime"
+                      className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-blue-950"
+                      type="time"
+                      value={scheduleTime}
+                      onChange={(event) => setScheduleTime(event.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="duration">
+                      Minutes
+                    </label>
+                    <input
+                      id="duration"
+                      className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-blue-950"
+                      min="15"
+                      step="15"
+                      type="number"
+                      value={durationMinutes}
+                      onChange={(event) => setDurationMinutes(event.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <button className="w-full rounded-md bg-mint px-4 py-2 font-semibold text-white transition hover:bg-emerald-700" type="submit">
+                  Create Scheduled Link
+                </button>
+
+                {scheduledLink ? (
+                  <div className="space-y-2 rounded-md bg-slate-50 p-3 text-sm dark:bg-slate-950">
+                    <p className="break-all text-slate-700 dark:text-slate-200">{scheduledLink}</p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <button className="rounded-md border border-line px-3 py-2 font-semibold hover:bg-white dark:border-slate-700 dark:hover:bg-slate-900" onClick={copyScheduledLink} type="button">
+                        Copy Link
+                      </button>
+                      <button className="rounded-md border border-line px-3 py-2 font-semibold hover:bg-white dark:border-slate-700 dark:hover:bg-slate-900" onClick={downloadInvite} type="button">
+                        Download Invite
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {scheduleStatus ? <p className="text-sm text-slate-500 dark:text-slate-400">{scheduleStatus}</p> : null}
+              </form>
+            </details>
 
             <form className="space-y-3" onSubmit={joinMeeting}>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="meetingId">

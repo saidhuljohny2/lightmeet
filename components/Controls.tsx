@@ -34,8 +34,8 @@ export function Controls({
         <ControlButton active={isMuted} label={isMuted ? "Unmute" : "Mute"} onClick={onToggleMic} />
         <ControlButton active={isCameraOff} label={isCameraOff ? "Camera on" : "Camera off"} onClick={onToggleCamera} />
         <ControlButton label="Share screen" onClick={onShareScreen} />
-        <ControlButton active={isRecording} label={isRecording ? "Stop rec" : "Record"} onClick={onRecord} />
-        <ControlButton active={isHandRaised} label={isHandRaised ? "Lower hand" : "Raise hand"} onClick={onToggleHand} />
+        <ControlButton active={isRecording} label={isRecording ? "⏺ Stop rec" : "⏺ Record"} onClick={onRecord} />
+        <ControlButton active={isHandRaised} label={isHandRaised ? "✋ Lower hand" : "✋ Raise hand"} onClick={onToggleHand} />
       </div>
       <button className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700" onClick={onLeave}>
         Leave
