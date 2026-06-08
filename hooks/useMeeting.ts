@@ -1,12 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MAX_PARTICIPANTS } from "@/lib/config";
 import { createPeerId } from "@/lib/ids";
 import { buildRecordingStream, downloadBlob } from "@/lib/recording";
 import { SignalingClient } from "@/lib/signaling";
 import type { ChatMessage, Participant, PeerId, ServerSignal, SignalPeer } from "@/types/meeting";
-
-const MAX_PARTICIPANTS = 10;
 
 const rtcConfig: RTCConfiguration = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -116,7 +115,7 @@ export function useMeeting({ roomId, name }: UseMeetingOptions) {
       try {
         if (message.type === "welcome") {
           if (message.peers.length >= MAX_PARTICIPANTS) {
-            setError("This room is full. Meetings support up to 10 participants.");
+            setError(`This room is full. Meetings support up to ${MAX_PARTICIPANTS} participants.`);
             return;
           }
           await Promise.all(message.peers.map(makeOffer));

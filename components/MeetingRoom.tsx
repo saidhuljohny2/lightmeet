@@ -5,6 +5,7 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { Controls } from "@/components/Controls";
 import { VideoTile } from "@/components/VideoTile";
 import { useMeeting } from "@/hooks/useMeeting";
+import { MAX_PARTICIPANTS } from "@/lib/config";
 
 type MeetingRoomProps = {
   roomId: string;
@@ -37,7 +38,7 @@ export function MeetingRoom({ roomId }: MeetingRoomProps) {
           <h1 className="break-all text-lg font-semibold">{roomId}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <StatusPill label={`${meeting.participants.length}/10`} tone="neutral" />
+          <StatusPill label={`${meeting.participants.length}/${MAX_PARTICIPANTS}`} tone="neutral" />
           <StatusPill label={meeting.networkQuality} tone={meeting.networkQuality === "good" ? "good" : meeting.networkQuality === "fair" ? "fair" : "bad"} />
           <button className="rounded-md border border-line px-3 py-2 text-sm font-medium hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-900" onClick={copyLink}>
             {copied ? "Copied" : "Copy link"}

@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { MAX_PARTICIPANTS } from "@/lib/config";
 import { createMeetingId } from "@/lib/ids";
 
 export function HomePanel() {
@@ -53,7 +54,7 @@ export function HomePanel() {
               Create a room, share the link, and talk directly through peer-to-peer video. No accounts, no database, no cloud recordings.
             </p>
             <div className="mt-8 grid grid-cols-3 gap-3 text-sm text-slate-600 dark:text-slate-300">
-              <Metric label="Participants" value="10" />
+              <Metric label="Participants" value={String(MAX_PARTICIPANTS)} />
               <Metric label="Storage" value="Local" />
               <Metric label="Deploy" value="Vercel" />
             </div>
