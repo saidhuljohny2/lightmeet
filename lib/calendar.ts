@@ -9,6 +9,7 @@ type CalendarEvent = {
 export type CalendarRecurrence = {
   frequency: "none" | "daily" | "weekly" | "monthly";
   count: number;
+  until?: Date;
 };
 
 export function createCalendarFile({ title, startsAt, durationMinutes, meetingLink, recurrence }: CalendarEvent) {
@@ -70,7 +71,10 @@ function buildRecurrenceRule(recurrence?: CalendarRecurrence) {
     weekly: "WEEKLY",
     monthly: "MONTHLY",
   } as const;
-  const count = Math.min(Math.max(Math.floor(recurrence.count || 1), 1), 365);
+  if (recurrence.until) {
+    return `RRULE:FREQ=${frequencyMap[recurrence.frequency]};UNTIL=${formatCalendarDate(recurrence.until)}`;
+  }
 
+  const count = Math.min(Math.max(Math.floor(recurrence.count || 1), 1), 365);
   return `RRULE:FREQ=${frequencyMap[recurrence.frequency]};COUNT=${count}`;
 }

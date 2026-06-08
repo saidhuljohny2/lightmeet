@@ -6,7 +6,7 @@ A simple, lightweight online meeting platform built with Next.js 15, TypeScript,
 
 - Create a meeting with a unique ID
 - Schedule a meeting by generating a future meeting link
-- Schedule one-time, daily, weekly, or monthly recurring meeting links
+- Schedule one-time, daily, weekly, or monthly recurring meeting links with occurrence count or end date
 - Download a local `.ics` calendar invite for scheduled and recurring meetings
 - Join a meeting by URL or meeting ID
 - Peer-to-peer camera and microphone with WebRTC

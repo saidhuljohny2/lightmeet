@@ -17,6 +17,7 @@ export function HomePanel() {
   const [durationMinutes, setDurationMinutes] = useState("45");
   const [recurrenceFrequency, setRecurrenceFrequency] = useState<CalendarRecurrence["frequency"]>("none");
   const [recurrenceCount, setRecurrenceCount] = useState("10");
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
   const [scheduledLink, setScheduledLink] = useState("");
   const [scheduleStatus, setScheduleStatus] = useState("");
   const displayName = name.trim() || suggestedName;
@@ -49,6 +50,13 @@ export function HomePanel() {
       setScheduleStatus("Choose a valid date and time.");
       return;
     }
+    if (recurrenceFrequency !== "none" && recurrenceEndDate) {
+      const endsOn = new Date(`${recurrenceEndDate}T23:59:59`);
+      if (endsOn < startsAt) {
+        setScheduleStatus("Recurrence end date must be after the first meeting.");
+        return;
+      }
+    }
 
     saveName();
     const roomId = createMeetingId();
@@ -67,6 +75,7 @@ export function HomePanel() {
   function downloadInvite() {
     if (!scheduledLink || !scheduleDate) return;
     const startsAt = new Date(`${scheduleDate}T${scheduleTime || "09:00"}`);
+    const recurrenceUntil = recurrenceEndDate ? new Date(`${recurrenceEndDate}T23:59:59`) : undefined;
     const contents = createCalendarFile({
       title: scheduleTitle.trim() || "LightMeet session",
       startsAt,
@@ -75,6 +84,7 @@ export function HomePanel() {
       recurrence: {
         frequency: recurrenceFrequency,
         count: Number(recurrenceCount) || 10,
+        until: recurrenceUntil,
       },
     });
     downloadCalendarFile(contents, `lightmeet-${scheduleDate}.ics`);
@@ -220,6 +230,23 @@ export function HomePanel() {
                     </div>
                   ) : null}
                 </div>
+
+                {recurrenceFrequency !== "none" ? (
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="recurrenceEndDate">
+                      Recurrence end date
+                    </label>
+                    <input
+                      id="recurrenceEndDate"
+                      className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-blue-950"
+                      min={scheduleDate || undefined}
+                      type="date"
+                      value={recurrenceEndDate}
+                      onChange={(event) => setRecurrenceEndDate(event.target.value)}
+                    />
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">When set, the calendar invite uses this end date instead of occurrence count.</p>
+                  </div>
+                ) : null}
 
                 <button className="w-full rounded-md bg-mint px-4 py-2 font-semibold text-white transition hover:bg-emerald-700" type="submit">
                   Create Scheduled Link
