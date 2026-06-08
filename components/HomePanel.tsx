@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { createCalendarFile, downloadCalendarFile, type CalendarRecurrence } from "@/lib/calendar";
 import { MAX_PARTICIPANTS } from "@/lib/config";
@@ -92,46 +93,64 @@ export function HomePanel() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f9fc] text-ink dark:bg-[#0b1120] dark:text-white">
-      <section className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-6 sm:px-8">
-        <nav className="flex items-center justify-between">
+    <main className="min-h-screen overflow-hidden bg-pearl text-ink">
+      <section className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-5 py-5 sm:px-8 lg:px-10">
+        <nav className="flex items-center justify-between rounded-lg border border-white/70 bg-white/75 px-4 py-3 shadow-soft backdrop-blur-xl">
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-md bg-brand text-sm font-bold text-white">LM</span>
-            <span className="text-lg font-semibold">LightMeet</span>
-          </div>
-          <span className="rounded-md border border-line bg-white px-3 py-1 text-sm text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-            WebRTC mesh
-          </span>
-        </nav>
-
-        <div className="grid flex-1 items-center gap-8 py-10 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="max-w-2xl">
-            <p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-brand">Private live sessions</p>
-            <h1 className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">Lightweight online meetings.</h1>
-            <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 dark:text-slate-300">
-              Create a room, share the link, and talk directly through peer-to-peer video. No accounts, no database, no cloud recordings.
-            </p>
-            <div className="mt-8 grid grid-cols-3 gap-3 text-sm text-slate-600 dark:text-slate-300">
-              <Metric label="Participants" value={String(MAX_PARTICIPANTS)} />
-              <Metric label="Storage" value="Local" />
-              <Metric label="Deploy" value="Vercel" />
+            <span className="grid h-10 w-10 place-items-center rounded-md bg-obsidian text-sm font-bold text-white shadow-control">LM</span>
+            <div>
+              <div className="text-base font-semibold leading-5">LightMeet</div>
+              <div className="text-xs text-slate-500">Premium WebRTC rooms</div>
             </div>
           </div>
+          <div className="hidden items-center gap-2 text-sm text-slate-600 sm:flex">
+            <span className="rounded-md border border-line bg-white px-3 py-2">No database</span>
+            <span className="rounded-md border border-line bg-white px-3 py-2">Local recording</span>
+          </div>
+        </nav>
 
-          <div className="rounded-lg border border-line bg-white p-5 shadow-soft dark:border-slate-700 dark:bg-slate-900">
-            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="name">
+        <div className="grid flex-1 items-center gap-8 py-8 lg:grid-cols-[minmax(0,1.04fr)_440px]">
+          <section className="relative min-h-[560px] overflow-hidden rounded-lg border border-white/80 bg-obsidian p-6 text-white shadow-premium sm:p-8">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_10%,rgba(59,130,246,0.42),transparent_28rem),radial-gradient(circle_at_88%_18%,rgba(16,185,129,0.28),transparent_24rem)]" />
+            <div className="absolute inset-x-8 bottom-0 top-28 rounded-t-lg border border-white/10 bg-white/[0.06] backdrop-blur" />
+            <div className="relative z-10 max-w-2xl">
+              <p className="mb-4 inline-flex rounded-md border border-white/15 bg-white/10 px-3 py-2 text-sm font-semibold text-blue-100">
+                Live sessions, beautifully simple
+              </p>
+              <h1 className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">Meet, teach, record, and share without the weight.</h1>
+              <p className="mt-5 max-w-xl text-base leading-7 text-slate-300">
+                A polished meeting experience for fast live sessions, recurring classes, lightweight teams, and browser-only recordings.
+              </p>
+            </div>
+
+            <div className="relative z-10 mt-10 grid max-w-3xl gap-3 sm:grid-cols-3">
+              <Metric label="Room capacity" value={String(MAX_PARTICIPANTS)} />
+              <Metric label="Recorder" value="MP4" />
+              <Metric label="Deploy" value="Vercel" />
+            </div>
+
+            <div className="relative z-10 mt-8 grid gap-3 sm:grid-cols-2">
+              <PreviewTile name="Aisha" status="Presenting" color="bg-blue-500" />
+              <PreviewTile name="Jon" status="Recording on" color="bg-emerald-500" />
+              <PreviewTile name="Maya" status="Hand raised" color="bg-amber-400" />
+              <PreviewTile name="You" status="Camera ready" color="bg-slate-200" darkText />
+            </div>
+          </section>
+
+          <section className="rounded-lg border border-white/80 bg-white/90 p-5 shadow-premium backdrop-blur-xl">
+            <label className="mb-2 block text-sm font-semibold text-slate-700" htmlFor="name">
               Display name
             </label>
             <input
               id="name"
-              className="mb-4 w-full rounded-md border border-line bg-white px-3 py-3 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-blue-950"
+              className="mb-4 w-full rounded-md border border-line bg-white px-3 py-3 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100"
               placeholder={suggestedName}
               value={name}
               onChange={(event) => setName(event.target.value)}
             />
 
             <button
-              className="mb-3 flex w-full items-center justify-center gap-2 rounded-md bg-brand px-4 py-3 font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200"
+              className="mb-3 flex w-full items-center justify-center gap-2 rounded-md bg-obsidian px-4 py-3 font-semibold text-white shadow-control transition hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-200"
               onClick={createMeeting}
               type="button"
             >
@@ -139,73 +158,38 @@ export function HomePanel() {
               Create Meeting
             </button>
 
-            <details className="mb-5 rounded-md border border-line dark:border-slate-700">
-              <summary className="cursor-pointer list-none px-4 py-3 text-center font-semibold transition hover:bg-slate-50 dark:hover:bg-slate-800">
+            <details className="mb-5 rounded-md border border-line bg-white">
+              <summary className="cursor-pointer list-none px-4 py-3 text-center font-semibold transition hover:bg-slate-50">
                 Schedule Meeting
               </summary>
-              <form className="space-y-3 border-t border-line p-4 dark:border-slate-700" onSubmit={scheduleMeeting}>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="scheduleTitle">
-                  Meeting title
-                </label>
+              <form className="space-y-3 border-t border-line p-4" onSubmit={scheduleMeeting}>
+                <FieldLabel htmlFor="scheduleTitle">Meeting title</FieldLabel>
                 <input
                   id="scheduleTitle"
-                  className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-blue-950"
+                  className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100"
                   value={scheduleTitle}
                   onChange={(event) => setScheduleTitle(event.target.value)}
                 />
 
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="sm:col-span-1">
-                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="scheduleDate">
-                      Date
-                    </label>
-                    <input
-                      id="scheduleDate"
-                      className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-blue-950"
-                      type="date"
-                      value={scheduleDate}
-                      onChange={(event) => setScheduleDate(event.target.value)}
-                    />
+                  <div>
+                    <FieldLabel htmlFor="scheduleDate">Date</FieldLabel>
+                    <input id="scheduleDate" className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100" type="date" value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="scheduleTime">
-                      Time
-                    </label>
-                    <input
-                      id="scheduleTime"
-                      className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-blue-950"
-                      type="time"
-                      value={scheduleTime}
-                      onChange={(event) => setScheduleTime(event.target.value)}
-                    />
+                    <FieldLabel htmlFor="scheduleTime">Time</FieldLabel>
+                    <input id="scheduleTime" className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100" type="time" value={scheduleTime} onChange={(event) => setScheduleTime(event.target.value)} />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="duration">
-                      Minutes
-                    </label>
-                    <input
-                      id="duration"
-                      className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-blue-950"
-                      min="15"
-                      step="15"
-                      type="number"
-                      value={durationMinutes}
-                      onChange={(event) => setDurationMinutes(event.target.value)}
-                    />
+                    <FieldLabel htmlFor="duration">Minutes</FieldLabel>
+                    <input id="duration" className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100" min="15" step="15" type="number" value={durationMinutes} onChange={(event) => setDurationMinutes(event.target.value)} />
                   </div>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-[1fr_120px]">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="recurrence">
-                      Repeat
-                    </label>
-                    <select
-                      id="recurrence"
-                      className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-blue-950"
-                      value={recurrenceFrequency}
-                      onChange={(event) => setRecurrenceFrequency(event.target.value as CalendarRecurrence["frequency"])}
-                    >
+                    <FieldLabel htmlFor="recurrence">Repeat</FieldLabel>
+                    <select id="recurrence" className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100" value={recurrenceFrequency} onChange={(event) => setRecurrenceFrequency(event.target.value as CalendarRecurrence["frequency"])}>
                       <option value="none">Does not repeat</option>
                       <option value="daily">Daily</option>
                       <option value="weekly">Weekly</option>
@@ -215,36 +199,17 @@ export function HomePanel() {
 
                   {recurrenceFrequency !== "none" ? (
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="repeatCount">
-                        Occurrences
-                      </label>
-                      <input
-                        id="repeatCount"
-                        className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-blue-950"
-                        min="2"
-                        max="365"
-                        type="number"
-                        value={recurrenceCount}
-                        onChange={(event) => setRecurrenceCount(event.target.value)}
-                      />
+                      <FieldLabel htmlFor="repeatCount">Occurrences</FieldLabel>
+                      <input id="repeatCount" className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100" min="2" max="365" type="number" value={recurrenceCount} onChange={(event) => setRecurrenceCount(event.target.value)} />
                     </div>
                   ) : null}
                 </div>
 
                 {recurrenceFrequency !== "none" ? (
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="recurrenceEndDate">
-                      Recurrence end date
-                    </label>
-                    <input
-                      id="recurrenceEndDate"
-                      className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-blue-950"
-                      min={scheduleDate || undefined}
-                      type="date"
-                      value={recurrenceEndDate}
-                      onChange={(event) => setRecurrenceEndDate(event.target.value)}
-                    />
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">When set, the calendar invite uses this end date instead of occurrence count.</p>
+                    <FieldLabel htmlFor="recurrenceEndDate">Recurrence end date</FieldLabel>
+                    <input id="recurrenceEndDate" className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100" min={scheduleDate || undefined} type="date" value={recurrenceEndDate} onChange={(event) => setRecurrenceEndDate(event.target.value)} />
+                    <p className="mt-1 text-xs text-slate-500">End date overrides occurrence count in the calendar invite.</p>
                   </div>
                 ) : null}
 
@@ -253,53 +218,70 @@ export function HomePanel() {
                 </button>
 
                 {scheduledLink ? (
-                  <div className="space-y-2 rounded-md bg-slate-50 p-3 text-sm dark:bg-slate-950">
-                    <p className="break-all text-slate-700 dark:text-slate-200">{scheduledLink}</p>
+                  <div className="space-y-2 rounded-md bg-slate-50 p-3 text-sm">
+                    <p className="break-all text-slate-700">{scheduledLink}</p>
                     <div className="grid gap-2 sm:grid-cols-2">
-                      <button className="rounded-md border border-line px-3 py-2 font-semibold hover:bg-white dark:border-slate-700 dark:hover:bg-slate-900" onClick={copyScheduledLink} type="button">
+                      <button className="rounded-md border border-line px-3 py-2 font-semibold hover:bg-white" onClick={copyScheduledLink} type="button">
                         Copy Link
                       </button>
-                      <button className="rounded-md border border-line px-3 py-2 font-semibold hover:bg-white dark:border-slate-700 dark:hover:bg-slate-900" onClick={downloadInvite} type="button">
+                      <button className="rounded-md border border-line px-3 py-2 font-semibold hover:bg-white" onClick={downloadInvite} type="button">
                         Download Invite
                       </button>
                     </div>
                   </div>
                 ) : null}
 
-                {scheduleStatus ? <p className="text-sm text-slate-500 dark:text-slate-400">{scheduleStatus}</p> : null}
+                {scheduleStatus ? <p className="text-sm text-slate-500">{scheduleStatus}</p> : null}
               </form>
             </details>
 
             <form className="space-y-3" onSubmit={joinMeeting}>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="meetingId">
-                Join with Meeting ID
-              </label>
+              <FieldLabel htmlFor="meetingId">Join with Meeting ID</FieldLabel>
               <input
                 id="meetingId"
-                className="w-full rounded-md border border-line bg-white px-3 py-3 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-blue-950"
+                className="w-full rounded-md border border-line bg-white px-3 py-3 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100"
                 placeholder="example: abc123-def456"
                 value={meetingId}
                 onChange={(event) => setMeetingId(event.target.value)}
               />
-              <button
-                className="w-full rounded-md border border-line px-4 py-3 font-semibold transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
-                type="submit"
-              >
+              <button className="w-full rounded-md border border-line bg-white px-4 py-3 font-semibold transition hover:bg-slate-50" type="submit">
                 Join Meeting
               </button>
             </form>
-          </div>
+          </section>
         </div>
       </section>
     </main>
   );
 }
 
+function FieldLabel({ children, htmlFor }: { children: ReactNode; htmlFor: string }) {
+  return (
+    <label className="mb-1 block text-sm font-semibold text-slate-700" htmlFor={htmlFor}>
+      {children}
+    </label>
+  );
+}
+
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-line bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
-      <div className="text-xl font-bold text-ink dark:text-white">{value}</div>
-      <div className="mt-1 text-xs">{label}</div>
+    <div className="rounded-md border border-white/10 bg-white/10 p-4 backdrop-blur">
+      <div className="text-2xl font-bold text-white">{value}</div>
+      <div className="mt-1 text-xs font-medium text-slate-300">{label}</div>
+    </div>
+  );
+}
+
+function PreviewTile({ color, darkText, name, status }: { color: string; darkText?: boolean; name: string; status: string }) {
+  return (
+    <div className="flex min-h-28 items-end justify-between rounded-lg border border-white/10 bg-white/[0.08] p-4 backdrop-blur">
+      <div>
+        <div className="text-sm font-semibold text-white">{name}</div>
+        <div className="mt-1 text-xs text-slate-300">{status}</div>
+      </div>
+      <div className={`grid h-12 w-12 place-items-center rounded-md ${color} text-sm font-bold ${darkText ? "text-slate-950" : "text-white"}`}>
+        {name.slice(0, 1)}
+      </div>
     </div>
   );
 }

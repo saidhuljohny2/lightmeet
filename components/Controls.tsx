@@ -28,8 +28,8 @@ export function Controls({
   onLeave,
 }: ControlsProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-      <span className="rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold tabular-nums dark:bg-slate-900">{formatTime(elapsedSeconds)}</span>
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.08] p-3 shadow-control backdrop-blur-xl">
+      <span className="rounded-md bg-white/10 px-3 py-2 text-sm font-semibold tabular-nums text-white">{formatTime(elapsedSeconds)}</span>
       <div className="flex flex-wrap items-center justify-center gap-2">
         <ControlButton active={isMuted} label={isMuted ? "Unmute" : "Mute"} onClick={onToggleMic} />
         <ControlButton active={isCameraOff} label={isCameraOff ? "Camera on" : "Camera off"} onClick={onToggleCamera} />
@@ -37,7 +37,7 @@ export function Controls({
         <ControlButton active={isRecording} label={isRecording ? "⏺ Stop rec" : "⏺ Record"} onClick={onRecord} />
         <ControlButton active={isHandRaised} label={isHandRaised ? "✋ Lower hand" : "✋ Raise hand"} onClick={onToggleHand} />
       </div>
-      <button className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700" onClick={onLeave}>
+      <button className="rounded-md bg-red-500 px-4 py-2 text-sm font-semibold text-white shadow-control transition hover:bg-red-600" onClick={onLeave}>
         Leave
       </button>
     </div>
@@ -48,9 +48,7 @@ function ControlButton({ active, label, onClick }: { active?: boolean; label: st
   return (
     <button
       className={`rounded-md border px-3 py-2 text-sm font-semibold transition ${
-        active
-          ? "border-brand bg-blue-50 text-brand dark:border-blue-700 dark:bg-blue-950 dark:text-blue-100"
-          : "border-line bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:hover:bg-slate-900"
+        active ? "border-blue-300/40 bg-blue-400/20 text-blue-100" : "border-white/10 bg-white/10 text-white hover:bg-white/15"
       }`}
       onClick={onClick}
       type="button"

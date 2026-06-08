@@ -18,18 +18,18 @@ export function VideoTile({ participant }: VideoTileProps) {
   }, [participant.stream]);
 
   return (
-    <article className="relative overflow-hidden rounded-lg border border-line bg-slate-950 shadow-sm dark:border-slate-800">
+    <article className="relative overflow-hidden rounded-lg border border-white/10 bg-slate-950 shadow-control">
       {participant.stream && !participant.cameraOff ? (
         <video ref={videoRef} autoPlay playsInline muted={participant.isLocal} className="h-full w-full object-cover" />
       ) : (
         <div className="grid h-full place-items-center bg-slate-900">
-          <div className="grid h-20 w-20 place-items-center rounded-md bg-brand text-2xl font-bold text-white">
+          <div className="grid h-20 w-20 place-items-center rounded-md bg-gradient-to-br from-blue-500 to-emerald-400 text-2xl font-bold text-white shadow-control">
             {getInitials(participant.name)}
           </div>
         </div>
       )}
 
-      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/75 to-transparent p-3 text-white">
+      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/80 to-transparent p-3 text-white">
         <span className="min-w-0 truncate text-sm font-medium">
           {participant.name}
           {participant.isLocal ? " (you)" : ""}
