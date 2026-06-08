@@ -51,7 +51,15 @@ server.on("connection", (socket) => {
     }
 
     if (message.type === "join") {
-      const room = rooms.get(message.roomId) ?? new Map();
+      const requestedRole = message.role === "admin" && verifyAdminSignalToken(message.adminToken) ? "admin" : "student";
+      const existingRoom = rooms.get(message.roomId);
+      if (!existingRoom && requestedRole !== "admin") {
+        send(socket, { type: "error", message: "This meeting has not been started by the admin yet." });
+        socket.close();
+        return;
+      }
+
+      const room = existingRoom ?? new Map();
       if (room.size >= MAX_PARTICIPANTS) {
         send(socket, { type: "error", message: "Room is full." });
         socket.close();
@@ -59,7 +67,6 @@ server.on("connection", (socket) => {
       }
 
       rooms.set(message.roomId, room);
-      const requestedRole = message.role === "admin" && verifyAdminSignalToken(message.adminToken) ? "admin" : "student";
       const peers = [...room.values()].map((client) => ({ peerId: client.peerId, name: client.name, role: client.role }));
       const client = { socket, peerId: message.peerId, name: message.name, role: requestedRole, roomId: message.roomId };
       room.set(message.peerId, client);

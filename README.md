@@ -87,7 +87,7 @@ Username: saidh
 Password: LightMeet@123
 ```
 
-Only the admin can create or schedule meetings. Students can still join with a meeting link or meeting ID. Change `ADMIN_PASSWORD` and `AUTH_SECRET` before deploying.
+Only the admin can create, schedule, and start meetings. The signaling relay rejects students who try to open a room before a verified admin has started it. Students can join with a meeting link or meeting ID after the room exists. Change `ADMIN_PASSWORD` and `AUTH_SECRET` before deploying.
 
 Admin controls are sent through the signaling server. The browser receiving the command applies mute/camera-off locally, which matches browser security rules around camera and microphone access.
 
