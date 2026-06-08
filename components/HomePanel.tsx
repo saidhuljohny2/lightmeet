@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createCalendarFile, downloadCalendarFile } from "@/lib/calendar";
+import { createCalendarFile, downloadCalendarFile, type CalendarRecurrence } from "@/lib/calendar";
 import { MAX_PARTICIPANTS } from "@/lib/config";
 import { createMeetingId } from "@/lib/ids";
 
@@ -15,6 +15,8 @@ export function HomePanel() {
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
   const [durationMinutes, setDurationMinutes] = useState("45");
+  const [recurrenceFrequency, setRecurrenceFrequency] = useState<CalendarRecurrence["frequency"]>("none");
+  const [recurrenceCount, setRecurrenceCount] = useState("10");
   const [scheduledLink, setScheduledLink] = useState("");
   const [scheduleStatus, setScheduleStatus] = useState("");
   const displayName = name.trim() || suggestedName;
@@ -53,7 +55,7 @@ export function HomePanel() {
     const link = `${window.location.origin}/meeting/${roomId}`;
     setScheduledLink(link);
     await navigator.clipboard.writeText(link);
-    setScheduleStatus("Meeting link copied.");
+    setScheduleStatus(recurrenceFrequency === "none" ? "Meeting link copied." : "Recurring meeting link copied.");
   }
 
   async function copyScheduledLink() {
@@ -70,6 +72,10 @@ export function HomePanel() {
       startsAt,
       durationMinutes: Number(durationMinutes) || 45,
       meetingLink: scheduledLink,
+      recurrence: {
+        frequency: recurrenceFrequency,
+        count: Number(recurrenceCount) || 10,
+      },
     });
     downloadCalendarFile(contents, `lightmeet-${scheduleDate}.ics`);
     setScheduleStatus("Calendar invite downloaded.");
@@ -177,6 +183,42 @@ export function HomePanel() {
                       onChange={(event) => setDurationMinutes(event.target.value)}
                     />
                   </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-[1fr_120px]">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="recurrence">
+                      Repeat
+                    </label>
+                    <select
+                      id="recurrence"
+                      className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-blue-950"
+                      value={recurrenceFrequency}
+                      onChange={(event) => setRecurrenceFrequency(event.target.value as CalendarRecurrence["frequency"])}
+                    >
+                      <option value="none">Does not repeat</option>
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="monthly">Monthly</option>
+                    </select>
+                  </div>
+
+                  {recurrenceFrequency !== "none" ? (
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="repeatCount">
+                        Occurrences
+                      </label>
+                      <input
+                        id="repeatCount"
+                        className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-blue-950"
+                        min="2"
+                        max="365"
+                        type="number"
+                        value={recurrenceCount}
+                        onChange={(event) => setRecurrenceCount(event.target.value)}
+                      />
+                    </div>
+                  ) : null}
                 </div>
 
                 <button className="w-full rounded-md bg-mint px-4 py-2 font-semibold text-white transition hover:bg-emerald-700" type="submit">

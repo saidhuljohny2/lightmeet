@@ -6,7 +6,8 @@ A simple, lightweight online meeting platform built with Next.js 15, TypeScript,
 
 - Create a meeting with a unique ID
 - Schedule a meeting by generating a future meeting link
-- Download a local `.ics` calendar invite for scheduled meetings
+- Schedule one-time, daily, weekly, or monthly recurring meeting links
+- Download a local `.ics` calendar invite for scheduled and recurring meetings
 - Join a meeting by URL or meeting ID
 - Peer-to-peer camera and microphone with WebRTC
 - Camera toggle, microphone mute, screen sharing, and leave controls
@@ -96,6 +97,8 @@ http://localhost:3000
 ```
 
 Use two browser tabs or two devices on the same network to test joining the same meeting ID. Camera, microphone, screen sharing, and recording require a browser context that allows media permissions.
+
+Scheduled meetings generate a meeting URL in the browser. Recurring meetings reuse that same URL and add an `RRULE` to the downloaded `.ics` calendar invite.
 
 ## Production Build
 
