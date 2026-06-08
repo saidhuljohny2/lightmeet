@@ -13,6 +13,7 @@ A simple, lightweight online meeting platform built with Next.js 15, TypeScript,
 - Local recording with the MediaRecorder API and direct WebM download
 - Meeting timer and basic connection quality indicator
 - Responsive layout for desktop, tablet, and mobile
+- Configurable room limit, defaulting to 100 members
 - No database, accounts, cloud storage, or paid meeting SDKs
 
 ## Important Vercel Note
@@ -52,12 +53,16 @@ Create `.env.local`:
 
 ```bash
 NEXT_PUBLIC_SIGNALING_URL=ws://localhost:3001
+NEXT_PUBLIC_MAX_PARTICIPANTS=100
+MAX_PARTICIPANTS=100
 ```
 
 For production, use a secure WebSocket URL:
 
 ```bash
 NEXT_PUBLIC_SIGNALING_URL=wss://your-signaling-host.example.com
+NEXT_PUBLIC_MAX_PARTICIPANTS=100
+MAX_PARTICIPANTS=100
 ```
 
 ## Local Development
@@ -115,6 +120,12 @@ PORT=3001 node signaling-server.mjs
 ```
 
 It stores rooms only in memory. Restarting the process clears active rooms, which keeps the architecture simple and cheap. Deploy it to any Node host that supports WebSockets and free hobby usage, then set the resulting `wss://` URL in `NEXT_PUBLIC_SIGNALING_URL`.
+
+## Capacity Notes
+
+The app defaults to a 100-member room limit through `NEXT_PUBLIC_MAX_PARTICIPANTS` and `MAX_PARTICIPANTS`.
+
+This limit controls admission and UI display. Pure peer-to-peer WebRTC mesh is still expensive for large meetings because every camera/microphone stream must be sent to many other browsers. For a real 100-person all-video meeting, use an SFU media server architecture. For this lightweight free-tier version, 100-member rooms are best used with most people muted, camera-off, or primarily using chat while only a few participants share active media.
 
 ## Browser Support Notes
 

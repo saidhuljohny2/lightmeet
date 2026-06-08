@@ -1,0 +1,44 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { getInitials } from "@/lib/ids";
+import type { Participant } from "@/types/meeting";
+
+type VideoTileProps = {
+  participant: Participant;
+};
+
+export function VideoTile({ participant }: VideoTileProps) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    if (videoRef.current && participant.stream) {
+      videoRef.current.srcObject = participant.stream;
+    }
+  }, [participant.stream]);
+
+  return (
+    <article className="relative overflow-hidden rounded-lg border border-line bg-slate-950 shadow-sm dark:border-slate-800">
+      {participant.stream && !participant.cameraOff ? (
+        <video ref={videoRef} autoPlay playsInline muted={participant.isLocal} className="h-full w-full object-cover" />
+      ) : (
+        <div className="grid h-full place-items-center bg-slate-900">
+          <div className="grid h-20 w-20 place-items-center rounded-md bg-brand text-2xl font-bold text-white">
+            {getInitials(participant.name)}
+          </div>
+        </div>
+      )}
+
+      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/75 to-transparent p-3 text-white">
+        <span className="min-w-0 truncate text-sm font-medium">
+          {participant.name}
+          {participant.isLocal ? " (you)" : ""}
+        </span>
+        <div className="flex shrink-0 items-center gap-1 text-xs">
+          {participant.handRaised ? <span className="rounded bg-white/15 px-2 py-1">Hand</span> : null}
+          {participant.muted ? <span className="rounded bg-white/15 px-2 py-1">Muted</span> : null}
+        </div>
+      </div>
+    </article>
+  );
+}
